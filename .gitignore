@@ -2,3 +2,4 @@ build/
 kernel/
 busybox/
 toolchain/
+drivers/

@@ -3,7 +3,7 @@
 
 # Source repositories
 KERNEL_REPO := https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
-TOYBOX_REPO := https://github.com/landley/toybox.git
+BUSYBOX_REPO := https://git.busybox.net/busybox
 
 # Library versions
 ZLIB_VERSION := 1.3.1
@@ -15,7 +15,7 @@ OPENSSL_URL := https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz
 
 # Directory structure
 KERNEL_DIR := kernel
-TOYBOX_DIR := toybox
+BUSYBOX_DIR := busybox
 DRIVERS_DIR := drivers
 BUILD_DIR := build
 TOOLCHAIN_DIR := toolchain

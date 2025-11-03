@@ -17,4 +17,4 @@ done
 echo "Welcome to Linux Driver Development SDK"
 
 # Start shell
-exec /bin/sh
+exec /sbin/getty -n -l /bin/sh 115200 console linux

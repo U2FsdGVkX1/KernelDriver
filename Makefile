@@ -7,8 +7,7 @@ include toolchain.mk
 
 # Common build commands
 KERNEL_MAKE := $(MAKE) -C $(KERNEL_DIR) ARCH=$(KERNEL_ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
-TOYBOX_MAKE := $(MAKE) -C $(TOYBOX_DIR) CROSS_COMPILE=$(CROSS_COMPILE) \
-	CFLAGS="-I$(PWD)/$(SYSROOT)/include" LDFLAGS="--static -L$(PWD)/$(SYSROOT)/lib"
+BUSYBOX_MAKE := $(MAKE) -C $(BUSYBOX_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
 
 # Build driver helper
 define build_drivers
@@ -31,7 +30,7 @@ help:
 	@echo "Targets:"
 	@echo "  all              - Build and launch QEMU"
 	@echo "  kernel           - Build Linux kernel"
-	@echo "  rootfs           - Build toybox rootfs"
+	@echo "  rootfs           - Build busybox rootfs"
 	@echo "  initrd           - Build initrd with drivers"
 	@echo "  qemu             - Launch QEMU"
 	@echo "  gdb              - Launch QEMU with GDB server"
@@ -58,30 +57,31 @@ kernel: $(KERNEL_DIR)/.config
 kernel-menuconfig: $(KERNEL_DIR)/.config
 	@$(KERNEL_MAKE) menuconfig
 
-# ===== Toybox =====
-$(TOYBOX_DIR)/.git:
-	@echo "Cloning toybox..."
-	@git clone --depth=1 $(TOYBOX_REPO) $(TOYBOX_DIR)
+# ===== BusyBox =====
+$(BUSYBOX_DIR)/.git:
+	@echo "Cloning busybox..."
+	@git clone --depth=1 $(BUSYBOX_REPO) $(BUSYBOX_DIR)
 
-$(TOYBOX_DIR)/.config: $(TOYBOX_DIR)/.git $(TOOLCHAIN_PATH)
-	@echo "Generating toybox config..."
-	@$(TOYBOX_MAKE) allyesconfig
-	@sed -i 's/^CONFIG_STRACE=y/# CONFIG_STRACE is not set/; s/^CONFIG_SYSLOGD=y/# CONFIG_SYSLOGD is not set/' $@
+$(BUSYBOX_DIR)/.config: $(BUSYBOX_DIR)/.git $(TOOLCHAIN_PATH)
+	@echo "Generating busybox config..."
+	@$(BUSYBOX_MAKE) defconfig
+	@sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' $@
+	@$(BUSYBOX_MAKE) oldconfig
 
-rootfs: $(TOYBOX_DIR)/.config
-	@echo "Building toybox for $(ARCH)..."
-	@$(TOYBOX_MAKE) -j$(NPROC)
-	@mkdir -p $(TOYBOX_DIR)/root
-	@$(TOYBOX_MAKE) PREFIX=$(PWD)/$(TOYBOX_DIR)/root install
+rootfs: $(BUSYBOX_DIR)/.config
+	@echo "Building busybox for $(ARCH)..."
+	@$(BUSYBOX_MAKE) -j$(NPROC)
+	@mkdir -p $(BUSYBOX_DIR)/_install
+	@$(BUSYBOX_MAKE) CONFIG_PREFIX=$(PWD)/$(BUSYBOX_DIR)/_install install
 
-rootfs-menuconfig: $(TOYBOX_DIR)/.config
-	@$(TOYBOX_MAKE) menuconfig
+rootfs-menuconfig: $(BUSYBOX_DIR)/.config
+	@$(BUSYBOX_MAKE) menuconfig
 
 # ===== Initrd =====
 initrd: kernel rootfs templates/init.sh
 	@echo "Building initrd..."
 	@rm -rf $(ROOTFS_DIR) && mkdir -p $(ROOTFS_DIR)
-	@cp -a $(TOYBOX_DIR)/root/* $(ROOTFS_DIR)/
+	@cp -a $(BUSYBOX_DIR)/_install/* $(ROOTFS_DIR)/
 	@mkdir -p $(ROOTFS_DIR)/{dev,proc,sys,lib/modules}
 	$(call build_drivers)
 	@cp templates/init.sh $(ROOTFS_DIR)/init && chmod +x $(ROOTFS_DIR)/init
@@ -118,7 +118,7 @@ template:
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(KERNEL_DIR)
-	@rm -rf $(TOYBOX_DIR)
+	@rm -rf $(BUSYBOX_DIR)
 	@rm -rf $(BUILD_DIR)
 
 clean-all: clean toolchain-clean

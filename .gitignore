@@ -1,4 +1,4 @@
 build/
 kernel/
-toybox/
+busybox/
 toolchain/

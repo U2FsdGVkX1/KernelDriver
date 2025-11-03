@@ -9,7 +9,7 @@ define ARCH_x86_64
 KERNEL_ARCH := x86_64
 KERNEL_IMAGE_PATH := arch/x86/boot/bzImage
 QEMU := qemu-system-x86_64
-QEMU_OPTS := -machine pc -cpu host -enable-kvm
+QEMU_OPTS := -machine pc -cpu qemu64
 TOOLCHAIN_TRIPLET := x86_64-linux-musl
 OPENSSL_TARGET := linux-x86_64
 endef

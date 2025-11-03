@@ -22,7 +22,7 @@ define build_drivers
 	fi
 endef
 
-.PHONY: all kernel rootfs initrd qemu template clean help
+.PHONY: all kernel rootfs initrd qemu gdb template clean help
 .DEFAULT_GOAL := help
 
 help:
@@ -34,6 +34,7 @@ help:
 	@echo "  rootfs           - Build toybox rootfs"
 	@echo "  initrd           - Build initrd with drivers"
 	@echo "  qemu             - Launch QEMU"
+	@echo "  gdb              - Launch QEMU with GDB server"
 	@echo "  template         - Create driver template"
 	@echo "  clean            - Clean build artifacts"
 
@@ -47,6 +48,8 @@ $(KERNEL_DIR)/.git:
 $(KERNEL_DIR)/.config: $(KERNEL_DIR)/.git $(TOOLCHAIN_PATH)
 	@echo "Generating kernel config..."
 	@$(KERNEL_MAKE) defconfig
+	@kernel/scripts/config --file $(KERNEL_DIR)/.config -e DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT -e GDB_SCRIPTS
+	@$(KERNEL_MAKE) olddefconfig
 
 kernel: $(KERNEL_DIR)/.config
 	@echo "Building kernel for $(ARCH)..."
@@ -93,6 +96,15 @@ qemu: $(KERNEL_DIR)/$(KERNEL_IMAGE_PATH) $(INITRD)
 		-initrd $(INITRD) \
 		-append "console=ttyS0 nokaslr" \
 		-nographic
+
+gdb: $(KERNEL_DIR)/$(KERNEL_IMAGE_PATH) $(INITRD)
+	@echo "Launching QEMU with GDB server for $(ARCH)..."
+	@echo "Connect with: gdb $(KERNEL_DIR)/vmlinux -ex 'target remote :1234'"
+	@$(QEMU) $(QEMU_OPTS) -m 1G \
+		-kernel $(KERNEL_DIR)/$(KERNEL_IMAGE_PATH) \
+		-initrd $(INITRD) \
+		-append "console=ttyS0 nokaslr" \
+		-nographic -s -S
 
 # ===== Template =====
 template:

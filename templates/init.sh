@@ -6,6 +6,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin
 mount -t proc none /proc
 mount -t sysfs none /sys
 mount -t devtmpfs none /dev
+mount -t debugfs none /sys/kernel/debug
 
 # Load kernel modules
 echo "Loading drivers..."
